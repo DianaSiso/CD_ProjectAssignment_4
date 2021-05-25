@@ -2,7 +2,6 @@
 
 import socket
 import selectors
-import select
 import signal
 import logging
 import argparse
@@ -75,6 +74,13 @@ class LeastResponseTime:
         pass
 
 
+POLICIES = {
+    "N2One": N2One,
+    "RoundRobin": RoundRobin,
+    "LeastConnections": LeastConnections,
+    "LeastResponseTime": LeastResponseTime
+}
+
 class SocketMapper:
     def __init__(self, policy):
         self.policy = policy
@@ -86,6 +92,7 @@ class SocketMapper:
         upstream_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         upstream_sock.connect(upstream_server)
         upstream_sock.setblocking(False)
+        sel.register(upstream_sock, selectors.EVENT_READ, read)
         logger.debug("Proxying to %s %s", *upstream_server)
         self.map[client_sock] =  upstream_sock
 
@@ -98,18 +105,15 @@ class SocketMapper:
             pass
 
     def get_sock(self, sock):
-        for c, u in self.map.items():
-            if u == sock:
-                return c
-            if c == sock:
-                return u
+        for client, upstream in self.map.items():
+            if upstream == sock:
+                return client
+            if client == sock:
+                return upstream
         return None
     
     def get_upstream_sock(self, sock):
-        for c, u in self.map.items():
-            if c == sock:
-                return u
-        return None
+        return self.map.get(sock)
 
     def get_all_socks(self):
         """ Flatten all sockets into a list"""
@@ -128,53 +132,42 @@ def read(conn,mask):
         mapper.get_sock(conn).send(data)
 
 
-def main(addr, servers):
+def main(addr, servers, policy_class):
     global policy
     global mapper
 
-
-def main(addr, servers):
     # register handler for interruption 
     # it stops the infinite loop gracefully
     signal.signal(signal.SIGINT, graceful_shutdown)
 
-    policy = N2One(servers)
+    policy = policy_class(servers)
     mapper = SocketMapper(policy)
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    sock.bind(addr)
+    sock.listen()
+    sock.setblocking(False)
+
+    sel.register(sock, selectors.EVENT_READ, accept)
 
     try:
-        sock.setblocking(False)
-        sock.bind(addr)
-        sock.listen()
         logger.debug("Listening on %s %s", *addr)
         while not done:
-            readable, writable, exceptional = select.select([sock]+mapper.get_all_socks(), [], [], 1)
-            if readable is not None:
-                for s in readable:
-                    if s == sock:
-                        client, addr = sock.accept()
-                        logger.debug("Accepted connection %s %s", *addr)
-                        client.setblocking(False)
-                        mapper.add(client, policy.select_server())
-                    if mapper.get_sock(s):
-                        data = s.recv(4096)
-                        if len(data) == 0: # No messages in socket, we can close down the socket
-                            mapper.delete(s)
-                        else:
-                            mapper.get_sock(s).send(data)
+            events = sel.select()
+            for key, mask in events:
+                callback = key.data
+                callback(key.fileobj, mask)
+                
     except Exception as err:
         logger.error(err)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Pi HTTP server')
+    parser.add_argument('-a', dest='policy', choices=POLICIES)
     parser.add_argument('-p', dest='port', type=int, help='load balancer port', default=8080)
     parser.add_argument('-s', dest='servers', nargs='+', type=int, help='list of servers ports')
     args = parser.parse_args()
     
-    servers = []
-    for p in args.servers:
-        servers.append(('localhost', p))
+    servers = [('localhost', p) for p in args.servers]
     
-    main(('127.0.0.1', args.port), servers)
+    main(('127.0.0.1', args.port), servers, POLICIES[args.policy])

@@ -5,7 +5,6 @@ from threading import Lock
 from utils import leibniz_pi_precision
 from flask import Flask
 from flask import render_template
-from nocache import nocache
 
 
 app = Flask(__name__)
@@ -23,4 +22,4 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Pi HTTP server')
     parser.add_argument('-p', dest='port', type=int, help='HTTP port', default=5000)
     args = parser.parse_args()
-    app.run(port=args.port)
+    app.run(port=args.port, threaded=False)

@@ -20,7 +20,8 @@ do
 done
 
 echo -e Start Load Balancer: $SERVERS
-python3 load_balancer.py -p 8080 -s $SERVERS
+
+python3 load_balancer.py -p 8080 -s $SERVERS -a N2One
 
 echo -e Stop $N_SERVERS Http Servers
 
