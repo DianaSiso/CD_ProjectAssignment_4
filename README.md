@@ -6,8 +6,8 @@ The code contains 4 classes that implement different strategies to select the ne
 
 1. **N to 1:** all the requests are routed to a single server
 2. **Round Robin:** the requests are routed to all servers in sequence
-3. **Least Connections:** the request is routed to the server with fewer processed connections
-4. **Least Response Time:** the request is routed to the server with less average execution time
+3. **Least Connections:** the request are routed to the server with fewer processed connections
+4. **Least Response Time:** the request are routed to the server with less execution time
 
 At the moment only the fist strategy is fully implemented.
 

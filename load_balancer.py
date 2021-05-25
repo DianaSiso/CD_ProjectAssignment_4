@@ -2,6 +2,7 @@
 
 import socket
 import selectors
+import select
 import signal
 import logging
 import argparse
@@ -85,7 +86,6 @@ class SocketMapper:
         upstream_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         upstream_sock.connect(upstream_server)
         upstream_sock.setblocking(False)
-        sel.register(upstream_sock, selectors.EVENT_READ, read)
         logger.debug("Proxying to %s %s", *upstream_server)
         self.map[client_sock] =  upstream_sock
 
@@ -98,15 +98,18 @@ class SocketMapper:
             pass
 
     def get_sock(self, sock):
-        for client, upstream in self.map.items():
-            if upstream == sock:
-                return client
-            if client == sock:
-                return upstream
+        for c, u in self.map.items():
+            if u == sock:
+                return c
+            if c == sock:
+                return u
         return None
     
     def get_upstream_sock(self, sock):
-        return self.map.get(sock)
+        for c, u in self.map.items():
+            if c == sock:
+                return u
+        return None
 
     def get_all_socks(self):
         """ Flatten all sockets into a list"""
@@ -129,6 +132,8 @@ def main(addr, servers):
     global policy
     global mapper
 
+
+def main(addr, servers):
     # register handler for interruption 
     # it stops the infinite loop gracefully
     signal.signal(signal.SIGINT, graceful_shutdown)
@@ -137,20 +142,28 @@ def main(addr, servers):
     mapper = SocketMapper(policy)
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind(addr)
-    sock.listen()
-    sock.setblocking(False)
-
-    sel.register(sock, selectors.EVENT_READ, accept)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
     try:
+        sock.setblocking(False)
+        sock.bind(addr)
+        sock.listen()
         logger.debug("Listening on %s %s", *addr)
         while not done:
-            events = sel.select()
-            for key, mask in events:
-                callback = key.data
-                callback(key.fileobj, mask)
-                
+            readable, writable, exceptional = select.select([sock]+mapper.get_all_socks(), [], [], 1)
+            if readable is not None:
+                for s in readable:
+                    if s == sock:
+                        client, addr = sock.accept()
+                        logger.debug("Accepted connection %s %s", *addr)
+                        client.setblocking(False)
+                        mapper.add(client, policy.select_server())
+                    if mapper.get_sock(s):
+                        data = s.recv(4096)
+                        if len(data) == 0: # No messages in socket, we can close down the socket
+                            mapper.delete(s)
+                        else:
+                            mapper.get_sock(s).send(data)
     except Exception as err:
         logger.error(err)
 
@@ -160,6 +173,8 @@ if __name__ == '__main__':
     parser.add_argument('-s', dest='servers', nargs='+', type=int, help='list of servers ports')
     args = parser.parse_args()
     
-    servers = [('localhost', p) for p in args.servers]
+    servers = []
+    for p in args.servers:
+        servers.append(('localhost', p))
     
     main(('127.0.0.1', args.port), servers)
