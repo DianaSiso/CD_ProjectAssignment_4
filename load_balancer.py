@@ -5,6 +5,7 @@ import selectors
 import signal
 import logging
 import argparse
+import time
 
 # configure logger output format
 logging.basicConfig(level=logging.DEBUG,format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',datefmt='%m-%d %H:%M:%S')
@@ -93,11 +94,34 @@ class LeastConnections:
 class LeastResponseTime:
     def __init__(self, servers):
         self.servers = servers
-
+        self.ultimotempo={}
+        self.tempo={}
+        self.media={}
+        for i in range(0,len(self.servers),1):
+            self.media[self.servers[i]]=0
     def select_server(self):
+        min=1000
+        idx=0
+        count=0
+        for elem in self.media:
+            if self.media[elem]<min:
+                min=self.media[elem]
+                idx=count
+            count=count+1
+        start=time.time()
+        self.ultimotempo[self.servers[idx]]=start
+        return self.servers[idx]
         pass
 
     def update(self, *arg):
+        end=time.time()
+        self.tempo[arg[0]].append(end - self.ultimotempo[arg[0]])
+        count=0
+        sum=0
+        for elem in self.tempo[arg[0]]:
+            count=count+1
+            sum=sum+elem
+        self.media[arg[0]]=sum/count
         pass
 
 
