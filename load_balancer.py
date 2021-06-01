@@ -78,9 +78,9 @@ class LeastConnections:
 
     def update(self, *arg):
         idx=self.servers.index(arg[0])
-        
-        self.connections[idx]=self.connections[idx]-1
         print("indice a tirar:" + str(idx))
+        if(self.connections[idx]!=0):
+            self.connections[idx]=self.connections[idx]-1
         print(self.connections)
         #recevemos o server que vai perder uma conexao
         #o 1º servidor deixou de ter conn
@@ -112,6 +112,7 @@ class SocketMapper:
     def __init__(self, policy):
         self.policy = policy
         self.map = {}
+        self.servers={}
 
     def add(self, client_sock, upstream_server):
         client_sock.setblocking(False)
@@ -122,10 +123,13 @@ class SocketMapper:
         sel.register(upstream_sock, selectors.EVENT_READ, read)
         logger.debug("Proxying to %s %s", *upstream_server)
         self.map[client_sock] =  upstream_sock
+        #self.servers[client_sock]=upstream_server
 
     def delete(self, sock):
         sel.unregister(sock)
+        #policy.update(self.servers[sock])
         sock.close()
+        
         if sock in self.map:
             self.map.pop(sock)
 
@@ -147,11 +151,13 @@ class SocketMapper:
 def accept(sock, mask):
     client, addr = sock.accept()
     logger.debug("Accepted connection %s %s", *addr)
+    #print("add"+str(sock))
     mapper.add(client, policy.select_server())
 
 def read(conn,mask):
     data = conn.recv(4096)
     if len(data) == 0: # No messages in socket, we can close down the socket
+        #print("remove"+str(conn))
         mapper.delete(conn)
         
     else:
