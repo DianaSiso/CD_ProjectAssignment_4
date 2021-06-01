@@ -112,10 +112,11 @@ class SocketMapper:
     def __init__(self, policy):
         self.policy = policy
         self.map = {}
-        self.servers={}
+        self.servers = {}
 
     def add(self, client_sock, upstream_server):
         client_sock.setblocking(False)
+        self.userv=upstream_server
         sel.register(client_sock, selectors.EVENT_READ, read)
         upstream_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         upstream_sock.connect(upstream_server)
@@ -123,13 +124,13 @@ class SocketMapper:
         sel.register(upstream_sock, selectors.EVENT_READ, read)
         logger.debug("Proxying to %s %s", *upstream_server)
         self.map[client_sock] =  upstream_sock
-        #self.servers[client_sock]=upstream_server
+        self.servers[client_sock]=upstream_server
 
     def delete(self, sock):
         sel.unregister(sock)
-        #policy.update(self.servers[sock])
+        if sock in self.servers:
+            policy.update(self.servers[sock])
         sock.close()
-        
         if sock in self.map:
             self.map.pop(sock)
 
