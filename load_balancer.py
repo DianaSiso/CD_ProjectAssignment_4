@@ -97,12 +97,10 @@ class SocketMapper:
         self.map[client_sock] =  upstream_sock
 
     def delete(self, sock):
-        try:
+        sel.unregister(sock)
+        sock.close()
+        if sock in self.map:
             self.map.pop(sock)
-            sel.unregister(sock)
-            sock.close() 
-        except KeyError:
-            pass
 
     def get_sock(self, sock):
         for client, upstream in self.map.items():
@@ -154,7 +152,7 @@ def main(addr, servers, policy_class):
     try:
         logger.debug("Listening on %s %s", *addr)
         while not done:
-            events = sel.select()
+            events = sel.select(timeout=1)
             for key, mask in events:
                 callback = key.data
                 callback(key.fileobj, mask)

@@ -11,7 +11,7 @@ echo -e "Stress test Load Balancer "
 PID_LIST=""
 
 START=$(date +%s)
-for i in {0..$C..1}
+for i in $(seq $C)
 do
   MAX=$(($MIN + $K))
   curl -s "http://localhost:8080/[$MIN-$MAX]" > /dev/null 2>&1 & 

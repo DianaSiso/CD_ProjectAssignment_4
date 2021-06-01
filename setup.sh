@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 N_SERVERS=${1:-4} 
+POLICY=${2:-N2One}
 
 # delete old pid file
 rm -f http_server.pid
@@ -21,7 +22,7 @@ done
 
 echo -e Start Load Balancer: $SERVERS
 
-python3 load_balancer.py -p 8080 -s $SERVERS -a N2One
+python3 load_balancer.py -p 8080 -s $SERVERS -a $POLICY
 
 echo -e Stop $N_SERVERS Http Servers
 

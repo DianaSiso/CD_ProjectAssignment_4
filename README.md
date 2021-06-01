@@ -31,12 +31,12 @@ $ source venv/bin/activate
 $ ./setup.sh
 ```
 
-Noutro terminal
+In another terminal
 ```console
 $ curl -s http://localhost:8080/10
 ```
 
-Ou abrir num browser
+Or use a browser to open
 ```console
 http://localhost:8080/10
 ```
@@ -55,7 +55,7 @@ $ ./stress_test.sh
 
 Alternative
 ```console
-$ httperf --server=localhost --port=8080 --uri=/100 --num-conns=100
+$ httperf --server=localhost --port=8080 --uri=/100 --num-conns=100 --rate=5
 ```
 
 ## Git Upstream
