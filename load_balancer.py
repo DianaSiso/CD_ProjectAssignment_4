@@ -71,9 +71,6 @@ class LeastConnections:
         print(self.connections)
         print("indice a por:" + str(idx))
         return self.servers[idx]
-        #array num conexoes
-        #ver quem tem menos, e atruibuis esse
-        #{2 , 1 , 2}
         pass
 
     def update(self, *arg):
@@ -82,9 +79,6 @@ class LeastConnections:
         if(self.connections[idx]!=0):
             self.connections[idx]=self.connections[idx]-1
         print(self.connections)
-        #recevemos o server que vai perder uma conexao
-        #o 1º servidor deixou de ter conn
-        #{1,1,2}
         pass
 
 
@@ -153,6 +147,7 @@ def accept(sock, mask):
     logger.debug("Accepted connection %s %s", *addr)
     #print("add"+str(sock))
     mapper.add(client, policy.select_server())
+    print("yuyu")
 
 def read(conn,mask):
     data = conn.recv(4096)
