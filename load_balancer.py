@@ -42,24 +42,51 @@ class N2One:
 class RoundRobin:
     def __init__(self, servers):
         self.servers = servers
-
+        self.idx=-1
     def select_server(self):
-        pass
+        self.idx=self.idx+1
+        if self.idx>=len(self.servers):
+            self.idx=0
+        return self.servers[self.idx]
     
     def update(self, *arg):
         pass
 
 
-# least connections policy
 class LeastConnections:
     def __init__(self, servers):
         self.servers = servers
-
+        self.connections=[]
+        for i in range(0,len(self.servers),1):
+            self.connections.append(0)
     def select_server(self):
+        min=1000
+        idx=0
+        for i in range(0,len(self.servers),1):
+            if(self.connections[i]<min):
+                min=self.connections[i]
+                idx=i
+        
+        self.connections[idx]=self.connections[idx]+1
+        print(self.connections)
+        print("indice a por:" + str(idx))
+        return self.servers[idx]
+        #array num conexoes
+        #ver quem tem menos, e atruibuis esse
+        #{2 , 1 , 2}
         pass
 
     def update(self, *arg):
+        idx=self.servers.index(arg[0])
+        
+        self.connections[idx]=self.connections[idx]-1
+        print("indice a tirar:" + str(idx))
+        print(self.connections)
+        #recevemos o server que vai perder uma conexao
+        #o 1º servidor deixou de ter conn
+        #{1,1,2}
         pass
+
 
 
 # least response time
