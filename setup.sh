@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 N_SERVERS=${1:-4} 
-POLICY=${2:-LeastConnections}
+POLICY=${2:-LeastResponseTime}
 
 # delete old pid file
 rm -f http_server.pid

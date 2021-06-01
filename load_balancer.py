@@ -5,6 +5,7 @@ import selectors
 import signal
 import logging
 import argparse
+import time
 
 # configure logger output format
 logging.basicConfig(level=logging.DEBUG,format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',datefmt='%m-%d %H:%M:%S')
@@ -87,11 +88,34 @@ class LeastConnections:
 class LeastResponseTime:
     def __init__(self, servers):
         self.servers = servers
-
+        self.ultimotempo={}
+        self.tempo={}
+        self.media={}
+        for i in range(0,len(self.servers),1):
+            self.media[self.servers[i]]=0
     def select_server(self):
+        min=1000
+        idx=0
+        count=0
+        for elem in self.media:
+            if self.media[elem]<min:
+                min=self.media[elem]
+                idx=count
+            count=count+1
+        start=time.time()
+        self.ultimotempo[self.servers[idx]]=start
+        return self.servers[idx]
         pass
 
     def update(self, *arg):
+        end=time.time()
+        self.tempo[arg[0]].append(end - self.ultimotempo[arg[0]])
+        count=0
+        sum=0
+        for elem in self.tempo[arg[0]]:
+            count=count+1
+            sum=sum+elem
+        self.media[arg[0]]=sum/count
         pass
 
 
@@ -106,10 +130,11 @@ class SocketMapper:
     def __init__(self, policy):
         self.policy = policy
         self.map = {}
-        self.servers={}
+        self.servers = {}
 
     def add(self, client_sock, upstream_server):
         client_sock.setblocking(False)
+        self.userv=upstream_server
         sel.register(client_sock, selectors.EVENT_READ, read)
         upstream_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         upstream_sock.connect(upstream_server)
@@ -117,13 +142,13 @@ class SocketMapper:
         sel.register(upstream_sock, selectors.EVENT_READ, read)
         logger.debug("Proxying to %s %s", *upstream_server)
         self.map[client_sock] =  upstream_sock
-        #self.servers[client_sock]=upstream_server
+        self.servers[client_sock]=upstream_server
 
     def delete(self, sock):
         sel.unregister(sock)
-        #policy.update(self.servers[sock])
+        if sock in self.servers:
+            policy.update(self.servers[sock])
         sock.close()
-        
         if sock in self.map:
             self.map.pop(sock)
 
