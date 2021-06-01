@@ -128,6 +128,7 @@ def read(conn,mask):
     data = conn.recv(4096)
     if len(data) == 0: # No messages in socket, we can close down the socket
         mapper.delete(conn)
+        
     else:
         mapper.get_sock(conn).send(data)
 
