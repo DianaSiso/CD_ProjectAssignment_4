@@ -176,7 +176,11 @@ def read(conn,mask):
         mapper.delete(conn)
         
     else:
+        print("----------------")
+        print(data)
+        print("----------------")
         mapper.get_sock(conn).send(data)
+        
 
 
 def main(addr, servers, policy_class):
@@ -215,6 +219,7 @@ if __name__ == '__main__':
     parser.add_argument('-s', dest='servers', nargs='+', type=int, help='list of servers ports')
     args = parser.parse_args()
     
+
     servers = [('localhost', p) for p in args.servers]
     
     main(('127.0.0.1', args.port), servers, POLICIES[args.policy])

@@ -1,3 +1,7 @@
+#Implementação da Cache
+Caso implementássemos uma cache, seria uma lista onde, sempre que o port fizer um pedido de algo averiguamo-la: se estiver na cache, buscamos o conteúdo à cache, caso contrário enviamos o pedido para o servidor. No final, armazenamos então esse novo pedido na cache para podermos usá-la futuramente.
+
+
 # Load Balancer
 
 Very simples HTTP/TCP Load Balancer.
