@@ -6,6 +6,7 @@ import signal
 import logging
 import argparse
 import time
+from statistics import mean
 
 # configure logger output format
 logging.basicConfig(level=logging.DEBUG,format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',datefmt='%m-%d %H:%M:%S')
@@ -99,15 +100,10 @@ class LeastResponseTime:
         self.media={}
         for i in range(0,len(self.servers),1):
             self.media[self.servers[i]]=0
+        
     def select_server(self):
-        min=1000
-        idx=0
-        count=0
-        for elem in self.media:
-            if self.media[elem]<min:
-                min=self.media[elem]
-                idx=count
-            count=count+1
+        temp=min(self.media, key=self.media.get)
+        idx=self.servers.index(temp)
         start=time.time()
         self.ultimotempo[self.servers[idx]]=start
         return self.servers[idx]
@@ -115,13 +111,12 @@ class LeastResponseTime:
 
     def update(self, *arg):
         end=time.time()
-        self.tempo[arg[0]].append(end - self.ultimotempo[arg[0]])
-        count=0
-        sum=0
-        for elem in self.tempo[arg[0]]:
-            count=count+1
-            sum=sum+elem
-        self.media[arg[0]]=sum/count
+        temp=end - self.ultimotempo[arg[0]]
+        if(arg[0] in self.tempo):
+            self.tempo[arg[0]].append(temp)
+        else:
+            self.tempo[arg[0]]=[temp]
+        self.media[arg[0]]=mean(self.tempo[arg[0]])
         pass
 
 
