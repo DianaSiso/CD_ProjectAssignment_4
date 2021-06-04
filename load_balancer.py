@@ -70,17 +70,17 @@ class LeastConnections:
                 idx=i
         
         self.connections[idx]=self.connections[idx]+1
-        print(self.connections)
-        print("indice a por:" + str(idx))
+        # print(self.connections)
+        # print("indice a por:" + str(idx))
         return self.servers[idx]
         pass
 
     def update(self, *arg):
         idx=self.servers.index(arg[0])
-        print("indice a tirar:" + str(idx))
+        # print("indice a tirar:" + str(idx))
         if(self.connections[idx]!=0):
             self.connections[idx]=self.connections[idx]-1
-        print(self.connections)
+        # print(self.connections)
         pass
 
 
@@ -167,7 +167,7 @@ def accept(sock, mask):
     logger.debug("Accepted connection %s %s", *addr)
     #print("add"+str(sock))
     mapper.add(client, policy.select_server())
-    print("yuyu")
+    
 
 def read(conn,mask):
     data = conn.recv(4096)
@@ -176,9 +176,6 @@ def read(conn,mask):
         mapper.delete(conn)
         
     else:
-        print("----------------")
-        print(data)
-        print("----------------")
         mapper.get_sock(conn).send(data)
         
 
